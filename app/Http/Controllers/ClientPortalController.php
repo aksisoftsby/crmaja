@@ -35,9 +35,31 @@ class ClientPortalController extends Controller
         return view('portal.invoices', ['invoices' => Invoice::query()->where('client_id', Auth::guard('portal')->user()->client_id)->latest()->paginate(15)]);
     }
 
+    public function invoiceShow(Invoice $invoice): View
+    {
+        $invoice = Invoice::query()
+            ->with(['items', 'payments'])
+            ->whereKey($invoice->id)
+            ->where('client_id', Auth::guard('portal')->user()->client_id)
+            ->firstOrFail();
+
+        return view('portal.invoice-show', compact('invoice'));
+    }
+
     public function proposals(): View
     {
         return view('portal.proposals', ['proposals' => Proposal::query()->where('client_id', Auth::guard('portal')->user()->client_id)->latest()->paginate(15)]);
+    }
+
+    public function proposalShow(Proposal $proposal): View
+    {
+        $proposal = Proposal::query()
+            ->with('items')
+            ->whereKey($proposal->id)
+            ->where('client_id', Auth::guard('portal')->user()->client_id)
+            ->firstOrFail();
+
+        return view('portal.proposal-show', compact('proposal'));
     }
 
     public function estimates(): View
@@ -45,16 +67,62 @@ class ClientPortalController extends Controller
         return view('portal.estimates', ['estimates' => Estimate::query()->where('client_id', Auth::guard('portal')->user()->client_id)->latest()->paginate(15)]);
     }
 
+    public function estimateShow(Estimate $estimate): View
+    {
+        $estimate = Estimate::query()
+            ->with('items')
+            ->whereKey($estimate->id)
+            ->where('client_id', Auth::guard('portal')->user()->client_id)
+            ->firstOrFail();
+
+        return view('portal.estimate-show', compact('estimate'));
+    }
+
     public function projects(): View
     {
         return view('portal.projects', ['projects' => Project::query()->with('tasks')->where('client_id', Auth::guard('portal')->user()->client_id)->latest()->paginate(15)]);
+    }
+
+    public function projectShow(Project $project): View
+    {
+        $project = Project::query()
+            ->with(['milestones', 'tasks.assignees'])
+            ->whereKey($project->id)
+            ->where('client_id', Auth::guard('portal')->user()->client_id)
+            ->firstOrFail();
+
+        return view('portal.project-show', compact('project'));
     }
 
     public function tickets(): View
     {
         $contact = Auth::guard('portal')->user();
 
-        return view('portal.tickets', ['tickets' => Ticket::query()->with(['department', 'replies'])->where('client_id', $contact->client_id)->latest()->paginate(15), 'departments' => TicketDepartment::query()->orderBy('name')->get()]);
+        return view('portal.tickets', [
+            'tickets' => Ticket::query()
+                ->with([
+                    'department',
+                    'replies' => fn ($query) => $query->where('is_internal_note', false)->latest(),
+                ])
+                ->where('client_id', $contact->client_id)
+                ->latest()
+                ->paginate(15),
+            'departments' => TicketDepartment::query()->orderBy('name')->get(),
+        ]);
+    }
+
+    public function ticketShow(Ticket $ticket): View
+    {
+        $ticket = Ticket::query()
+            ->with([
+                'department',
+                'replies' => fn ($query) => $query->where('is_internal_note', false)->oldest(),
+            ])
+            ->whereKey($ticket->id)
+            ->where('client_id', Auth::guard('portal')->user()->client_id)
+            ->firstOrFail();
+
+        return view('portal.ticket-show', compact('ticket'));
     }
 
     public function storeTicket(Request $request): RedirectResponse

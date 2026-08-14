@@ -1,0 +1,51 @@
+<x-portal.layout :title="'Invoice '.$invoice->number">
+    <div class="mx-auto max-w-5xl px-5">
+        <a href="{{ route('portal.invoices') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-teal-700 transition hover:text-teal-900">
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M17.5 10a.75.75 0 0 1-.75.75H5.06l3.97 3.97a.75.75 0 0 1-1.06 1.06l-5.25-5.25a.75.75 0 0 1 0-1.06l5.25-5.25a.75.75 0 0 1 1.06 1.06L5.06 9.25h11.69a.75.75 0 0 1 .75.75Z" clip-rule="evenodd" /></svg>
+            Kembali ke daftar Invoice
+        </a>
+
+        <div class="mt-5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <div class="flex flex-col gap-5 border-b border-slate-200 px-6 py-6 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-slate-500">Invoice</p>
+                    <h1 class="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">{{ $invoice->number }}</h1>
+                    <p class="mt-2 text-sm text-slate-500">Terbit {{ $invoice->date?->format('d M Y') ?? '—' }}</p>
+                </div>
+                <span class="inline-flex w-fit rounded-full bg-teal-50 px-3 py-1.5 text-sm font-bold text-teal-800">{{ str($invoice->status)->replace('_', ' ')->title() }}</span>
+            </div>
+
+            <div class="grid gap-4 border-b border-slate-200 bg-slate-50 px-6 py-5 sm:grid-cols-3">
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Jatuh tempo</p><p class="mt-1 font-semibold text-slate-800">{{ $invoice->due_date?->format('d M Y') ?? '—' }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Total tagihan</p><p class="mt-1 font-semibold text-slate-800">Rp {{ number_format((float) $invoice->total, 2, ',', '.') }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Sudah dibayar</p><p class="mt-1 font-semibold text-emerald-700">Rp {{ number_format((float) $invoice->paid_amount, 2, ',', '.') }}</p></div>
+            </div>
+
+            <section class="px-6 py-6">
+                <h2 class="text-base font-extrabold text-slate-900">Rincian tagihan</h2>
+                <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500"><tr><th class="px-4 py-3">Deskripsi</th><th class="px-4 py-3 text-right">Qty</th><th class="px-4 py-3 text-right">Harga</th><th class="px-4 py-3 text-right">Jumlah</th></tr></thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse($invoice->items as $item)
+                                <tr><td class="px-4 py-3.5 font-medium text-slate-800">{{ $item->description }}</td><td class="px-4 py-3.5 text-right text-slate-600">{{ number_format((float) $item->qty, 2, ',', '.') }}</td><td class="px-4 py-3.5 text-right text-slate-600">Rp {{ number_format((float) $item->rate, 2, ',', '.') }}</td><td class="px-4 py-3.5 text-right font-semibold text-slate-800">Rp {{ number_format((float) $item->amount, 2, ',', '.') }}</td></tr>
+                            @empty
+                                <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">Belum ada item pada invoice ini.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <dl class="ml-auto mt-5 max-w-sm space-y-2 text-sm"><div class="flex justify-between gap-5"><dt class="text-slate-500">Subtotal</dt><dd class="font-semibold text-slate-800">Rp {{ number_format((float) $invoice->subtotal, 2, ',', '.') }}</dd></div><div class="flex justify-between gap-5"><dt class="text-slate-500">Diskon</dt><dd class="font-semibold text-slate-800">Rp {{ number_format((float) $invoice->discount, 2, ',', '.') }}</dd></div><div class="flex justify-between gap-5 border-t border-slate-200 pt-3 text-base"><dt class="font-extrabold text-slate-900">Total</dt><dd class="font-extrabold text-teal-700">Rp {{ number_format((float) $invoice->total, 2, ',', '.') }}</dd></div></dl>
+            </section>
+
+            @if($invoice->notes)
+                <section class="border-t border-slate-200 px-6 py-6"><h2 class="text-base font-extrabold text-slate-900">Catatan</h2><p class="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{{ $invoice->notes }}</p></section>
+            @endif
+
+            <section class="border-t border-slate-200 px-6 py-6">
+                <h2 class="text-base font-extrabold text-slate-900">Riwayat pembayaran</h2>
+                <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table class="min-w-full divide-y divide-slate-200 text-sm"><thead class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500"><tr><th class="px-4 py-3">Tanggal</th><th class="px-4 py-3">Metode</th><th class="px-4 py-3">Referensi</th><th class="px-4 py-3 text-right">Jumlah</th></tr></thead><tbody class="divide-y divide-slate-100">@forelse($invoice->payments as $payment)<tr><td class="px-4 py-3.5 text-slate-700">{{ $payment->paid_at?->format('d M Y') ?? '—' }}</td><td class="px-4 py-3.5 text-slate-700">{{ str($payment->payment_mode)->replace('_', ' ')->title() }}</td><td class="px-4 py-3.5 text-slate-600">{{ $payment->transaction_id ?? '—' }}</td><td class="px-4 py-3.5 text-right font-semibold text-emerald-700">Rp {{ number_format((float) $payment->amount, 2, ',', '.') }}</td></tr>@empty<tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">Belum ada pembayaran yang tercatat.</td></tr>@endforelse</tbody></table></div>
+            </section>
+        </div>
+    </div>
+</x-portal.layout>

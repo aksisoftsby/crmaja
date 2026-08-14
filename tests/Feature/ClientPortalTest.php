@@ -4,7 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Client;
 use App\Models\Contact;
+use App\Models\Estimate;
 use App\Models\Invoice;
+use App\Models\Project;
+use App\Models\Proposal;
+use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -32,6 +36,29 @@ class ClientPortalTest extends TestCase
         $this->get('/portal/login')->assertOk();
         $this->post('/portal/login', ['email' => $contact->email, 'password' => 'PortalPass123!'])->assertRedirect('/portal');
         $this->get('/portal/invoices')->assertOk()->assertSee('INV-PORTAL-OWN')->assertDontSee('INV-PORTAL-OTHER');
+    }
+
+    public function test_portal_contact_can_open_only_own_document_detail_routes(): void
+    {
+        $admin = User::query()->where('email', 'admin@aksisoft.test')->firstOrFail();
+        $client = Client::create(['company_name' => 'PT Detail Portal', 'currency' => 'IDR', 'assigned_staff_id' => $admin->id, 'created_by' => $admin->id, 'is_active' => true]);
+        $otherClient = Client::create(['company_name' => 'PT Detail Lain', 'currency' => 'IDR', 'assigned_staff_id' => $admin->id, 'created_by' => $admin->id, 'is_active' => true]);
+        $contact = Contact::create(['client_id' => $client->id, 'first_name' => 'Detail', 'last_name' => 'User', 'email' => 'detail.portal@example.test', 'is_primary' => true, 'is_active' => true, 'password' => Hash::make('PortalPass123!')]);
+        $invoice = Invoice::create(['client_id' => $client->id, 'number' => 'INV-PORTAL-DETAIL', 'date' => now(), 'status' => 'unpaid', 'subtotal' => 1000, 'discount' => 0, 'total' => 1000, 'paid_amount' => 0, 'created_by' => $admin->id]);
+        $otherInvoice = Invoice::create(['client_id' => $otherClient->id, 'number' => 'INV-PORTAL-PRIVATE', 'date' => now(), 'status' => 'unpaid', 'subtotal' => 2000, 'discount' => 0, 'total' => 2000, 'paid_amount' => 0, 'created_by' => $admin->id]);
+        $proposal = Proposal::create(['client_id' => $client->id, 'number' => 'PRP-PORTAL-DETAIL', 'subject' => 'Proposal portal', 'content' => 'Ruang lingkup portal', 'subtotal' => 1000, 'discount' => 0, 'total' => 1000, 'status' => 'sent', 'date' => now(), 'open_till' => now()->addDays(30)]);
+        $estimate = Estimate::create(['client_id' => $client->id, 'number' => 'EST-PORTAL-DETAIL', 'date' => now(), 'status' => 'sent', 'subtotal' => 1000, 'discount' => 0, 'total' => 1000]);
+        $project = Project::create(['name' => 'Project portal detail', 'client_id' => $client->id, 'status' => 'in_progress', 'billing_type' => 'fixed', 'progress' => 50, 'created_by' => $admin->id]);
+        $ticket = Ticket::create(['number' => 'TKT-PORTAL-DETAIL', 'subject' => 'Ticket portal detail', 'client_id' => $client->id, 'contact_id' => $contact->id, 'priority' => 'medium', 'status' => 'open', 'source' => 'portal']);
+
+        $this->actingAs($contact, 'portal');
+
+        $this->get(route('portal.invoices.show', $invoice))->assertOk()->assertSee('INV-PORTAL-DETAIL');
+        $this->get(route('portal.proposals.show', $proposal))->assertOk()->assertSee('Proposal portal');
+        $this->get(route('portal.estimates.show', $estimate))->assertOk()->assertSee('EST-PORTAL-DETAIL');
+        $this->get(route('portal.projects.show', $project))->assertOk()->assertSee('Project portal detail');
+        $this->get(route('portal.tickets.show', $ticket))->assertOk()->assertSee('Ticket portal detail');
+        $this->get(route('portal.invoices.show', $otherInvoice))->assertNotFound();
     }
 
     public function test_portal_contact_can_submit_ticket_for_own_company(): void

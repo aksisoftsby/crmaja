@@ -36,10 +36,15 @@ Route::middleware('auth:portal')->prefix('portal')->name('portal.')->group(funct
     Route::get('/', [ClientPortalController::class, 'dashboard'])->name('dashboard');
     Route::post('logout', [PortalAuthController::class, 'destroy'])->name('logout');
     Route::get('invoices', [ClientPortalController::class, 'invoices'])->name('invoices');
+    Route::get('invoices/{invoice}', [ClientPortalController::class, 'invoiceShow'])->name('invoices.show');
     Route::get('proposals', [ClientPortalController::class, 'proposals'])->name('proposals');
+    Route::get('proposals/{proposal}', [ClientPortalController::class, 'proposalShow'])->name('proposals.show');
     Route::get('estimates', [ClientPortalController::class, 'estimates'])->name('estimates');
+    Route::get('estimates/{estimate}', [ClientPortalController::class, 'estimateShow'])->name('estimates.show');
     Route::get('projects', [ClientPortalController::class, 'projects'])->name('projects');
+    Route::get('projects/{project}', [ClientPortalController::class, 'projectShow'])->name('projects.show');
     Route::get('tickets', [ClientPortalController::class, 'tickets'])->name('tickets');
+    Route::get('tickets/{ticket}', [ClientPortalController::class, 'ticketShow'])->name('tickets.show');
     Route::post('tickets', [ClientPortalController::class, 'storeTicket'])->name('tickets.store');
     Route::get('knowledge-base', [ClientPortalController::class, 'knowledgeBase'])->name('knowledge-base');
     Route::get('knowledge-base/{article}', [ClientPortalController::class, 'knowledgeBaseShow'])->name('knowledge-base.show');
