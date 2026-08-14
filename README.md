@@ -1,8 +1,8 @@
 # Aksisoft CRM
 
-**Aksisoft CRM** adalah aplikasi CRM berbasis Laravel untuk pengelolaan pelanggan, leads, dokumen penjualan, pembayaran, proyek, dukungan pelanggan, Knowledge Base, dan Client Portal. Aplikasi ini dibangun dengan Laravel 11, MySQL 8, Blade, Tailwind CSS, Laravel Breeze, serta Spatie Permission.
+**Aksisoft CRM** adalah aplikasi CRM berbasis Laravel untuk pengelolaan pelanggan, leads, dokumen penjualan, pembayaran, proyek, dukungan pelanggan, Knowledge Base, dan Client Portal. Aplikasi ini dibangun dengan Laravel 12, MySQL 8, Blade, Tailwind CSS, Laravel Breeze, serta Spatie Permission.
 
-> Status rilis: aplikasi sedang divalidasi secara lokal. Perubahan aplikasi **belum** dipublikasikan ke GitHub atau dideploy ke lingkungan produksi.
+> Status rilis: rilis Laravel 12 telah dipublikasikan ke branch `main` dan dideploy ke `https://crm.aksisoft.web.id`.
 
 ## Modul yang tersedia
 
@@ -107,12 +107,12 @@ Target produksi adalah `https://crm.aksisoft.web.id`. Jalankan deployment hanya 
 
 ### 1. Siapkan server
 
-Install Nginx, PHP-FPM 8.3, ekstensi PHP Laravel, MySQL client, Node.js, NPM, dan Supervisor. Gunakan pengguna database khusus aplikasi, bukan root.
+Install Apache atau Nginx, PHP 8.3, ekstensi PHP Laravel, MySQL/MariaDB client, Node.js, NPM, Supervisor, serta Certbot. Gunakan pengguna database khusus aplikasi, bukan root. Deployment saat ini menggunakan virtual host Apache karena server telah menjalankan Apache untuk situs lain.
 
 ```bash
 sudo apt update
-sudo apt install -y nginx php8.3-fpm php8.3-mysql php8.3-mbstring php8.3-xml \
-  php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath nodejs npm supervisor
+sudo apt install -y apache2 php8.3 php8.3-mysql php8.3-mbstring php8.3-xml \
+  php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath nodejs npm supervisor certbot python3-certbot-apache
 ```
 
 ### 2. Buat database produksi
@@ -128,43 +128,51 @@ FLUSH PRIVILEGES;
 
 ```bash
 cd /var/www
-git clone https://github.com/aksisoftsby/crmaja.git crm
-cd crm
+git clone https://github.com/aksisoftsby/crmaja.git aksisoft-crm
+cd aksisoft-crm
 composer install --no-dev --optimize-autoloader
 cp .env.example .env
 php artisan key:generate
 npm ci
 npm run build
 php artisan migrate --seed --force
-sudo chown -R www-data:www-data /var/www/crm
+sudo chown -R www-data:www-data /var/www/aksisoft-crm
 sudo chmod -R 775 storage bootstrap/cache
 ```
 
 Konfigurasi `.env` produksi setidaknya harus berisi `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://crm.aksisoft.web.id`, koneksi database produksi, serta `QUEUE_CONNECTION=database`. Gunakan secret yang unik dan tidak pernah disimpan dalam Git.
 
-### 4. Nginx, queue, dan scheduler
+### 4. Web server, HTTPS, queue, dan scheduler
 
-Arahkan `root` virtual host Nginx ke `/var/www/crm/public`, lalu jalankan queue worker dengan Supervisor.
+Arahkan `DocumentRoot` Apache atau `root` Nginx ke `/var/www/aksisoft-crm/public`. Pada deployment saat ini, virtual host Apache bernama `aksisoft-crm.conf` menggunakan `ServerName crm.aksisoft.web.id`, `AllowOverride All`, dan `DocumentRoot /var/www/aksisoft-crm/public`. Terbitkan sertifikat HTTPS menggunakan Certbot setelah record DNS tersedia.
+
+```bash
+sudo certbot --apache -d crm.aksisoft.web.id --redirect
+```
+
+Jalankan queue worker dengan Supervisor.
 
 ```ini
 [program:aksisoft-crm-worker]
 process_name=%(program_name)s_%(process_num)02d
-command=php /var/www/crm/artisan queue:work --sleep=3 --tries=3
+command=/usr/bin/php /var/www/aksisoft-crm/artisan queue:work --sleep=3 --tries=3 --max-time=3600
 autostart=true
 autorestart=true
-numprocs=2
+numprocs=1
 user=www-data
 ```
 
-Tambahkan Laravel scheduler ke crontab pengguna server.
+Tambahkan Laravel scheduler melalui file cron sistem agar terisolasi dari pekerjaan lain pada server.
 
 ```cron
-* * * * * cd /var/www/crm && php artisan schedule:run >> /dev/null 2>&1
+* * * * * www-data cd /var/www/aksisoft-crm && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
 ```
+
+Simpan entri tersebut sebagai `/etc/cron.d/aksisoft-crm` dengan permission `644`.
 
 ### 5. DNS Cloudflare
 
-Jika menggunakan Cloudflare Tunnel, buat Public Hostname dengan subdomain `crm`, domain `aksisoft.web.id`, dan service `http://localhost:80`. Jika menggunakan DNS proxy biasa, buat record `A` `crm` yang menunjuk ke IP server, aktifkan proxy Cloudflare, dan gunakan SSL/TLS `Full (Strict)` dengan sertifikat origin yang valid.
+Jika menggunakan Cloudflare Tunnel, buat Public Hostname dengan subdomain `crm`, domain `aksisoft.web.id`, dan service `http://localhost:80`. Deployment saat ini menggunakan record `A` Cloudflare `crm` yang menunjuk ke IP VPS. Record dapat diaktifkan sebagai proxy Cloudflare setelah origin HTTPS tervalidasi; gunakan mode SSL/TLS `Full (Strict)` saat proxy diaktifkan.
 
 ## Keamanan operasional
 
