@@ -107,7 +107,8 @@ class AccessControlSeeder extends Seeder
             LeadStatus::updateOrCreate(['name' => $status['name']], $status);
         }
 
-        $admin = User::updateOrCreate(
+        // An existing administrator can have a production password that must never be reset by re-seeding.
+        $admin = User::firstOrCreate(
             ['email' => 'admin@aksisoft.test'],
             [
                 'name' => 'Aksisoft Super Admin',

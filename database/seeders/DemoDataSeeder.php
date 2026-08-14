@@ -40,6 +40,7 @@ class DemoDataSeeder extends Seeder
 
         $admin = User::query()->where('email', 'admin@aksisoft.test')->firstOrFail();
         $staff = $this->seedStaff();
+        $this->seedRoleDemoAccounts();
         $groups = $this->seedCustomerGroups();
         $sources = $this->seedLeadSources();
         $statuses = $this->seedLeadStatuses();
@@ -306,6 +307,25 @@ class DemoDataSeeder extends Seeder
         }
 
         return $staff;
+    }
+
+    private function seedRoleDemoAccounts(): void
+    {
+        foreach ([
+            ['name' => 'Demo Sales Aksi CRM', 'email' => 'sales@demo.aksisoft.test', 'role' => 'Sales'],
+            ['name' => 'Demo Support Aksi CRM', 'email' => 'support@demo.aksisoft.test', 'role' => 'Support'],
+        ] as $account) {
+            $user = User::query()->firstOrCreate(
+                ['email' => $account['email']],
+                [
+                    'name' => $account['name'],
+                    'email_verified_at' => now(),
+                    'password' => Hash::make('DemoRolePass123!'),
+                    'remember_token' => Str::random(10),
+                ],
+            );
+            $user->syncRoles([$account['role']]);
+        }
     }
 
     /** @return array<int, CustomerGroup> */
