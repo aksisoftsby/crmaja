@@ -5,8 +5,9 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5" aria-label="Aksi CRM Dashboard">
+                        <x-application-logo class="block h-9 w-9" />
+                        <span class="text-base font-extrabold tracking-tight text-slate-900">Aksi<span class="text-teal-700">CRM</span></span>
                     </a>
                 </div>
 
