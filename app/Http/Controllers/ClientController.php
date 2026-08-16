@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateClientRequest;
 use App\Models\Client;
 use App\Models\CustomerGroup;
 use App\Models\User;
+use App\Support\ActivityLogger;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,6 +66,7 @@ class ClientController extends Controller
         $client = new Client($data);
         $client->created_by = $request->user()->id;
         $client->save();
+        ActivityLogger::record($request->user(), $client, 'client.created', 'Pelanggan ditambahkan.');
 
         return to_route('clients.show', $client)
             ->with('status', 'Pelanggan berhasil ditambahkan.');
@@ -83,6 +85,13 @@ class ClientController extends Controller
             'creator',
             'contacts' => fn ($query) => $query->orderByDesc('is_primary')->orderBy('first_name'),
             'notes.creator',
+            'proposals' => fn ($query) => $query->latest()->limit(6),
+            'estimates' => fn ($query) => $query->latest()->limit(6),
+            'invoices' => fn ($query) => $query->latest()->limit(6),
+            'projects' => fn ($query) => $query->latest()->limit(6),
+            'tickets' => fn ($query) => $query->latest()->limit(6),
+            'convertedLeads.status',
+            'activityLogs.actor',
         ]);
 
         return view('clients.show', compact('client'));
@@ -107,6 +116,7 @@ class ClientController extends Controller
         $data['currency'] = strtoupper($data['currency']);
 
         $client->update($data);
+        ActivityLogger::record($request->user(), $client, 'client.updated', 'Data pelanggan diperbarui.', ['fields' => array_keys($data)]);
 
         return to_route('clients.show', $client)
             ->with('status', 'Data pelanggan berhasil diperbarui.');
@@ -119,6 +129,7 @@ class ClientController extends Controller
     {
         $this->authorize('delete', $client);
 
+        ActivityLogger::record($request->user(), $client, 'client.archived', 'Pelanggan diarsipkan.');
         $client->delete();
 
         return to_route('clients.index')

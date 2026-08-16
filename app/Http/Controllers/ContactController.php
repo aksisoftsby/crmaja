@@ -6,6 +6,7 @@ use App\Http\Requests\StoreContactRequest;
 use App\Http\Requests\UpdateContactRequest;
 use App\Models\Client;
 use App\Models\Contact;
+use App\Support\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -28,6 +29,8 @@ class ContactController extends Controller
 
             $client->contacts()->create($data);
         });
+
+        ActivityLogger::record($request->user(), $client, 'contact.created', 'Kontak pelanggan ditambahkan.');
 
         return to_route('clients.show', $client)
             ->with('status', 'Kontak pelanggan berhasil ditambahkan.');
@@ -52,6 +55,8 @@ class ContactController extends Controller
             $contact->update($data);
         });
 
+        ActivityLogger::record($request->user(), $client, 'contact.updated', 'Kontak pelanggan diperbarui.');
+
         return to_route('clients.show', $client)
             ->with('status', 'Kontak pelanggan berhasil diperbarui.');
     }
@@ -72,6 +77,8 @@ class ContactController extends Controller
                 $client->contacts()->orderBy('id')->first()?->update(['is_primary' => true]);
             }
         });
+
+        ActivityLogger::record($request->user(), $client, 'contact.archived', 'Kontak pelanggan diarsipkan.');
 
         return to_route('clients.show', $client)
             ->with('status', 'Kontak pelanggan telah diarsipkan.');

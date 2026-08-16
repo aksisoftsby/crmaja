@@ -10,7 +10,7 @@ class Payment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['amount', 'paid_at', 'payment_mode', 'transaction_id', 'note'];
+    protected $fillable = ['amount', 'paid_at', 'payment_mode', 'payment_method_id', 'transaction_id', 'note'];
 
     protected function casts(): array
     {
@@ -25,5 +25,10 @@ class Payment extends Model
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class);
     }
 }

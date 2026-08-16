@@ -19,7 +19,8 @@ class StorePaymentRequest extends FormRequest
         return [
             'amount' => ['required', 'numeric', 'gt:0'],
             'paid_at' => ['required', 'date'],
-            'payment_mode' => ['required', 'string', 'max:100'],
+            'payment_mode' => ['nullable', 'string', 'max:100'],
+            'payment_method_id' => ['nullable', 'integer', 'exists:payment_methods,id'],
             'transaction_id' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:5000'],
         ];
