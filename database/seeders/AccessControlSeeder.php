@@ -107,17 +107,20 @@ class AccessControlSeeder extends Seeder
             LeadStatus::updateOrCreate(['name' => $status['name']], $status);
         }
 
-        // An existing administrator can have a production password that must never be reset by re-seeding.
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@aksisoft.test'],
-            [
-                'name' => 'Aksisoft Super Admin',
-                'password' => Hash::make('ChangeMe123!'),
-                'email_verified_at' => now(),
-            ],
-        );
+        // A deterministic account is safe only for isolated test and local environments.
+        // Production administrators must be provisioned explicitly via crm:provision-admin.
+        if (app()->environment('local') || app()->runningUnitTests()) {
+            $admin = User::firstOrCreate(
+                ['email' => 'admin@aksisoft.test'],
+                [
+                    'name' => 'Aksisoft Super Admin',
+                    'password' => Hash::make('ChangeMe123!'),
+                    'email_verified_at' => now(),
+                ],
+            );
 
-        $admin->syncRoles([$superAdmin]);
+            $admin->syncRoles([$superAdmin]);
+        }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }

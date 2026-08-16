@@ -12,16 +12,26 @@ class Invoice extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['client_id', 'number', 'date', 'due_date', 'status', 'subtotal', 'discount', 'total', 'paid_amount', 'notes'];
+    protected $fillable = ['client_id', 'currency_id', 'tax_id', 'number', 'date', 'due_date', 'status', 'subtotal', 'discount', 'tax_rate', 'tax_amount', 'total', 'paid_amount', 'notes'];
 
     protected function casts(): array
     {
-        return ['date' => 'date', 'due_date' => 'date', 'subtotal' => 'decimal:2', 'discount' => 'decimal:2', 'total' => 'decimal:2', 'paid_amount' => 'decimal:2'];
+        return ['date' => 'date', 'due_date' => 'date', 'subtotal' => 'decimal:2', 'discount' => 'decimal:2', 'tax_rate' => 'decimal:4', 'tax_amount' => 'decimal:2', 'total' => 'decimal:2', 'paid_amount' => 'decimal:2'];
     }
 
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function currencyMaster(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'currency_id');
+    }
+
+    public function tax(): BelongsTo
+    {
+        return $this->belongsTo(Tax::class);
     }
 
     public function creator(): BelongsTo

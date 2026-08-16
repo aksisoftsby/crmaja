@@ -38,7 +38,16 @@ class DemoDataSeeder extends Seeder
     {
         $this->call(AccessControlSeeder::class);
 
-        $admin = User::query()->where('email', 'admin@aksisoft.test')->firstOrFail();
+        // Explicit demo seeding intentionally provisions demo-only credentials.
+        $admin = User::query()->firstOrCreate(
+            ['email' => 'admin@aksisoft.test'],
+            [
+                'name' => 'Aksisoft Super Admin',
+                'email_verified_at' => now(),
+                'password' => Hash::make('ChangeMe123!'),
+            ],
+        );
+        $admin->syncRoles(['Super Admin']);
         $staff = $this->seedStaff();
         $this->seedRoleDemoAccounts();
         $groups = $this->seedCustomerGroups();

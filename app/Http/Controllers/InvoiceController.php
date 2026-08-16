@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Client;
+use App\Models\Currency;
 use App\Models\Invoice;
 use App\Models\Item;
+use App\Models\PaymentMethod;
+use App\Models\Tax;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,15 +53,15 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice): View
     {
         $this->authorize('view', $invoice);
-        $invoice->load(['client', 'items.item', 'payments.recorder']);
+        $invoice->load(['client.currencyMaster', 'tax', 'items.item', 'payments.recorder', 'payments.paymentMethod']);
 
-        return view('invoices.show', compact('invoice'));
+        return view('invoices.show', ['invoice' => $invoice, 'paymentMethods' => PaymentMethod::query()->where('is_active', true)->orderBy('name')->get()]);
     }
 
     public function pdf(Invoice $invoice)
     {
         $this->authorize('view', $invoice);
-        $invoice->load(['client', 'items.item', 'payments.recorder']);
+        $invoice->load(['client.currencyMaster', 'tax', 'items.item', 'payments.recorder', 'payments.paymentMethod']);
 
         return Pdf::loadView('invoices.pdf', compact('invoice'))
             ->setPaper('a4')
@@ -98,7 +101,14 @@ class InvoiceController extends Controller
         $subtotal = collect($items)->sum(fn (array $item): float => (float) $item['qty'] * (float) $item['rate']);
         $data['subtotal'] = $subtotal;
         $data['discount'] = (float) ($data['discount'] ?? 0);
-        $data['total'] = max(0, $subtotal - $data['discount']);
+        $taxableAmount = max(0, $subtotal - $data['discount']);
+        $tax = isset($data['tax_id']) ? Tax::query()->where('is_active', true)->find($data['tax_id']) : null;
+        $data['tax_id'] = $tax?->id;
+        $data['tax_rate'] = (float) ($tax?->rate ?? 0);
+        $data['tax_amount'] = round($taxableAmount * $data['tax_rate'] / 100, 2);
+        $data['total'] = $taxableAmount + $data['tax_amount'];
+        $client = Client::query()->findOrFail($data['client_id']);
+        $data['currency_id'] = $data['currency_id'] ?? $client->currency_id ?? Currency::query()->where('is_default', true)->value('id');
         $invoice->fill($data);
         $invoice->save();
         $invoice->items()->delete();
@@ -121,6 +131,8 @@ class InvoiceController extends Controller
         return [
             'clients' => Client::query()->active()->orderBy('company_name')->get(),
             'items' => Item::query()->where('is_active', true)->orderBy('title')->get(),
+            'currencies' => Currency::query()->where('is_active', true)->orderByDesc('is_default')->orderBy('code')->get(),
+            'taxes' => Tax::query()->where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(),
         ];
     }
 }

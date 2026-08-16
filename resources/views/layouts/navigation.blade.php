@@ -31,6 +31,15 @@
                             {{ __('Items') }}
                         </x-nav-link>
                     @endcan
+                    @can('proposals.view')
+                        <x-dropdown align="left" width="56">
+                            <x-slot name="trigger"><button class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium leading-5 text-gray-500 transition hover:text-gray-700">Sales <svg class="ms-1 h-4 w-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></button></x-slot>
+                            <x-slot name="content"><x-dropdown-link :href="route('proposals.index')">Proposal</x-dropdown-link><x-dropdown-link :href="route('estimates.index')">Estimate</x-dropdown-link><x-dropdown-link :href="route('invoices.index')">Invoice</x-dropdown-link></x-slot>
+                        </x-dropdown>
+                    @endcan
+                    @can('invoices.view')
+                        <x-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">{{ __('Finance') }}</x-nav-link>
+                    @endcan
                     @can('viewAny', App\Models\Project::class)
                         <x-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
                             {{ __('Projects') }}
@@ -50,6 +59,12 @@
                         <x-nav-link :href="route('kb-articles.index')" :active="request()->routeIs('kb-articles.*')">
                             {{ __('Knowledge Base') }}
                         </x-nav-link>
+                    @endcan
+                    @can('reports.view')
+                        <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">{{ __('Reports') }}</x-nav-link>
+                    @endcan
+                    @can('staff.view_all')
+                        <x-dropdown align="left" width="48"><x-slot name="trigger"><button class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium leading-5 text-gray-500 transition hover:text-gray-700">Administration <svg class="ms-1 h-4 w-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></button></x-slot><x-slot name="content"><x-dropdown-link :href="route('staff.index')">Staff</x-dropdown-link>@can('roles.manage')<x-dropdown-link :href="route('roles.index')">Role & Permission</x-dropdown-link><x-dropdown-link :href="route('settings.finance')">Pengaturan Finance</x-dropdown-link>@endcan</x-slot></x-dropdown>
                     @endcan
                 </div>
             </div>
@@ -121,6 +136,13 @@
                     {{ __('Items') }}
                 </x-responsive-nav-link>
             @endcan
+            @can('proposals.view')
+                <x-responsive-nav-link :href="route('proposals.index')" :active="request()->routeIs('proposals.*')">{{ __('Proposal') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('estimates.index')" :active="request()->routeIs('estimates.*')">{{ __('Estimate') }}</x-responsive-nav-link>
+            @endcan
+            @can('invoices.view')
+                <x-responsive-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">{{ __('Invoice & Finance') }}</x-responsive-nav-link>
+            @endcan
             @can('viewAny', App\Models\Project::class)
                 <x-responsive-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
                     {{ __('Projects') }}
@@ -140,6 +162,15 @@
                 <x-responsive-nav-link :href="route('kb-articles.index')" :active="request()->routeIs('kb-articles.*')">
                     {{ __('Knowledge Base') }}
                 </x-responsive-nav-link>
+            @endcan
+            @can('reports.view')
+                <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">{{ __('Reports') }}</x-responsive-nav-link>
+            @endcan
+            @can('staff.view_all')
+                <x-responsive-nav-link :href="route('staff.index')" :active="request()->routeIs('staff.*')">{{ __('Staff') }}</x-responsive-nav-link>
+            @endcan
+            @can('roles.manage')
+                <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">{{ __('Role & Permission') }}</x-responsive-nav-link>
             @endcan
         </div>
 

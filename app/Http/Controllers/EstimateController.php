@@ -93,11 +93,11 @@ class EstimateController extends Controller
             $estimate->items()->create(['item_id' => $item['item_id'] ?? null, 'description' => $item['description'], 'qty' => $item['qty'], 'rate' => $item['rate'], 'amount' => (float) $item['qty'] * (float) $item['rate']]);
         }
 
-return $estimate;
+        return $estimate;
     }
 
     private function formOptions(): array
     {
-        return ['clients' => Client::query()->active()->orderBy('company_name')->get(), 'items' => Item::query()->where('is_active',true)->orderBy('title')->get()];
+        return ['clients' => Client::query()->active()->orderBy('company_name')->get(), 'items' => Item::query()->where('is_active', true)->orderBy('title')->get()];
     }
 }

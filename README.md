@@ -73,13 +73,19 @@ Akses area staf pada `http://127.0.0.1:8000/login`.
 
 | Akun | Email | Kata sandi |
 |---|---|---|
-| Super Admin lokal | `admin@aksisoft.test` | `ChangeMe123!` |
+| Super Admin lokal/testing | `admin@aksisoft.test` | `ChangeMe123!` |
 
-> Ganti kredensial default sebelum digunakan oleh pengguna lain. Jangan gunakan kredensial contoh di lingkungan produksi.
+> Credential ini hanya dibuat pada environment `local` dan `testing`. Jangan gunakan atau buat credential contoh pada lingkungan produksi.
 
 ## Data demo opsional
 
-Seeder dasar (`php artisan migrate --seed`) hanya membuat role, permission, Super Admin, sumber/status lead, dan departemen ticket. Jalankan seeder demo secara eksplisit untuk mengisi contoh pelanggan, contact portal, item, lead, project, task, invoice, ticket, dan artikel Knowledge Base.
+Seeder dasar (`php artisan migrate --seed`) membuat role, permission, sumber/status lead, dan departemen ticket. Ia hanya membuat Super Admin deterministik pada environment `local` atau `testing`. Untuk production, provision administrator secara eksplisit setelah seeding permission:
+
+```bash
+php artisan crm:provision-admin admin@perusahaan.com --name="Administrator" --password="gunakan-password-random-minimal-12-karakter"
+```
+
+Jalankan seeder demo secara eksplisit untuk mengisi contoh pelanggan, contact portal, item, lead, project, task, invoice, ticket, dan artikel Knowledge Base.
 
 ```bash
 php artisan db:seed --class=DemoDataSeeder
@@ -136,6 +142,7 @@ php artisan key:generate
 npm ci
 npm run build
 php artisan migrate --seed --force
+php artisan crm:provision-admin admin@perusahaan.com --name="Administrator" --password="gunakan-password-random-minimal-12-karakter"
 sudo chown -R www-data:www-data /var/www/aksisoft-crm
 sudo chmod -R 775 storage bootstrap/cache
 ```
