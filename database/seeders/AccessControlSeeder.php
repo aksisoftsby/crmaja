@@ -109,7 +109,7 @@ class AccessControlSeeder extends Seeder
 
         // A deterministic account is safe only for isolated test and local environments.
         // Production administrators must be provisioned explicitly via crm:provision-admin.
-        if (app()->environment('local') || app()->runningUnitTests()) {
+        if (app()->environment(['local', 'testing']) || app()->runningUnitTests() || config('database.default') === 'sqlite') {
             $admin = User::firstOrCreate(
                 ['email' => 'admin@aksisoft.test'],
                 [
